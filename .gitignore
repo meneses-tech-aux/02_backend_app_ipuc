@@ -42,3 +42,6 @@ wheels/
 # --- Sistema operativo ---
 .DS_Store
 Thumbs.db
+
+# --- Base de datos ---
+appipuc.sql
