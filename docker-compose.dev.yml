@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_app_db
+    env_file:
+      - .env.preproduccion
+    environment:
+      - POSTGRES=appipuc
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  
+  volumes:
+    pgdata:
