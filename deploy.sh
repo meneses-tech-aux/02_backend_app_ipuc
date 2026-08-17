@@ -6,6 +6,6 @@ echo "DEPLOY SH -> ACTUALIZANDO SERVIDOR"
 
 git pull origin main
 
-sudo docker compose --env-file .env.preproduccion -f docker-compose.dev.yml up -d
+sudo docker compose --env-file .env.development -f docker-compose.dev.yml up -d
 
 echo "DEPLOY SH -> DESPLIEGUE FINALIZADO"
