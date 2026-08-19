@@ -1,31 +1,36 @@
 import requests
 from core.config import settings
 
-def verificar_credenciales_paideia(username: str, password: str) -> bool:
+def verificar_usuario_paideia(username: str) -> dict | None:
     """
-    Intenta obtener un token de usuario desde Moodle. 
-    Si Moodle devuelve un token, la contraseña es correcta.
-    Si devuelve un error, las credenciales son inválidas.
+    Verifica si un usuario (DNI o código) existe en Paideia utilizando el wstoken.
+    Retorna los datos del usuario si existe, o None si no existe o hay error.
     """
-    # Moodle siempre tiene este endpoint para apps externas
-    # Asumiendo que settings.URL_PAIDEIA es "https://paideia.pucp.edu.pe"
-    base_url = settings.URL_PAIDEIA.replace('/webservice/rest/server.php', '')
-    url = f"{base_url}/login/token.php"
+    url = settings.URL_PAIDEIA
     
     params = {
-        'username': username,
-        'password': password,
-        'service': 'moodle_mobile_app' # Servicio estándar de Moodle para apps
+        "wstoken": settings.MOODLE_WS_TOKEN,
+        "wsfunction": "core_user_get_users_by_field",
+        "moodlewsrestformat": "json",
+        "field": "username",
+        "values[0]": username.strip()
     }
 
     try:
         response = requests.post(url, data=params, timeout=10)
         data = response.json()
         
-        # Si Moodle genera un token, el usuario es real y su clave es correcta
-        if "token" in data:
-            return True
-        return False
+        # Moodle devuelve una lista con los usuarios encontrados: [{'id': 123, 'username': '70055505', ...}]
+        if isinstance(data, list) and len(data) > 0:
+            return data[0]  # Retorna el primer usuario coincidente
+            
+        # Si devuelve un dict con 'exception' o 'errorcode', falló la llamada
+        if isinstance(data, dict) and "exception" in data:
+            print(f"Error devuelto por Moodle WS: {data.get('message')}")
+            return None
+            
+        return None
+        
     except Exception as e:
-        print(f"Error al conectar con Paideia: {e}")
-        return False
+        print(f"Error al conectar con el WebService de Paideia: {e}")
+        return None

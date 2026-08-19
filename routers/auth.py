@@ -1,33 +1,47 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from services.auth_moodle import verificar_credenciales_paideia
+from services.auth_moodle import verificar_usuario_paideia
 from core.security import crear_token_acceso
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Autenticación"])
 
 class LoginRequest(BaseModel):
     username: str
-    password: str
+    password: str | None = None
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    user_info: dict | None = None
 
 @router.post("/login", response_model=TokenResponse)
 def login_for_access_token(credentials: LoginRequest):
-    # 1. Verificar contra Moodle (Paideia)
-    es_valido = verificar_credenciales_paideia(credentials.username, credentials.password)
+    # 1. Verificar si el DNI / usuario existe en Paideia usando wstoken
+    usuario_paideia = verificar_usuario_paideia(credentials.username)
     
-    if not es_valido:
+    if not usuario_paideia:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario o contraseña incorrectos",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El usuario no se encuentra registrado en Paideia Idiomas.",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # 2. Si es válido, crear nuestro propio token guardando el DNI en el campo 'sub'
-    token_data = {"sub": credentials.username}
+    # 2. Generar el JWT con el DNI en el subject y datos extra útiles
+    token_data = {
+        "sub": str(usuario_paideia["username"]),
+        "moodle_id": usuario_paideia.get("id"),
+        "fullname": usuario_paideia.get("fullname")
+    }
     access_token = crear_token_acceso(token_data)
     
-    # 3. Enviar al celular
-    return {"access_token": access_token, "token_type": "bearer"}
+    # 3. Retornar respuesta al cliente/móvil
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_info": {
+            "id": usuario_paideia.get("id"),
+            "username": usuario_paideia.get("username"),
+            "fullname": usuario_paideia.get("fullname"),
+            "email": usuario_paideia.get("email")
+        }
+    }
