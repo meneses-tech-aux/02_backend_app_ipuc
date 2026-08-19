@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, Date, DateTime, Boolean, Foreign
 from sqlalchemy.orm import relationship
 from core.database import Base
 
-# 1. Tabla Alumno
 class Alumno(Base):
     __tablename__ = "alumno"
 
@@ -17,12 +16,11 @@ class Alumno(Base):
     fecha_nacimiento = Column(Date, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
-    # Relaciones
+    # Relaciones con llave foránea apuntando a alumno.id
     fotos = relationship("Foto", back_populates="alumno", cascade="all, delete-orphan")
     matriculas = relationship("Matricula", back_populates="alumno", cascade="all, delete-orphan")
 
 
-# 2. Tabla Fotos
 class Foto(Base):
     __tablename__ = "fotos"
 
@@ -32,13 +30,13 @@ class Foto(Base):
     menor_de_edad = Column(Boolean, default=False)
     estado = Column(String(20), default="pendiente")
     fecha_subida = Column(DateTime, server_default=func.now())
+    
+    # Llave foránea en singular ('alumno.id')
     id_alumno = Column(Integer, ForeignKey("alumno.id", ondelete="CASCADE"), nullable=False)
 
-    # Relación
     alumno = relationship("Alumno", back_populates="fotos")
 
 
-# 3. Tabla Matricula
 class Matricula(Base):
     __tablename__ = "matricula"
 
@@ -50,14 +48,14 @@ class Matricula(Base):
     curso = Column(String(150), nullable=False)
     horario = Column(String(100), nullable=False)
     estado = Column(String(20), nullable=False, index=True)
+    
+    # Llave foránea en singular ('alumno.id')
     id_alumno = Column(Integer, ForeignKey("alumno.id", ondelete="CASCADE"), nullable=False, index=True)
     created_at = Column(DateTime, server_default=func.now())
 
-    # Relación
     alumno = relationship("Alumno", back_populates="matriculas")
 
 
-# 4. Tabla Notificaciones
 class Notificacion(Base):
     __tablename__ = "notificaciones"
 
@@ -65,11 +63,9 @@ class Notificacion(Base):
     descripcion = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
-    # Relación
     viewers = relationship("AppViewer", back_populates="notificacion", cascade="all, delete-orphan")
 
 
-# 5. Tabla Beneficios
 class Beneficio(Base):
     __tablename__ = "beneficios"
 
@@ -78,11 +74,9 @@ class Beneficio(Base):
     descripcion = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
 
-    # Relación
     viewers = relationship("AppViewer", back_populates="beneficio", cascade="all, delete-orphan")
 
 
-# 6. Tabla App_Viewer
 class AppViewer(Base):
     __tablename__ = "app_viewer"
 
@@ -93,6 +87,5 @@ class AppViewer(Base):
     fecha_caducidad = Column(Date, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
-    # Relaciones
     notificacion = relationship("Notificacion", back_populates="viewers")
     beneficio = relationship("Beneficio", back_populates="viewers")
