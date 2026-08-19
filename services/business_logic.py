@@ -80,3 +80,23 @@ def obtener_notificaciones_activas(db: Session):
         })
         
     return notificaciones_lista
+
+def obtener_fotos_alumno(db: Session, dni: str) -> List[Foto]:
+    alumno = db.query(Alumno).filter(Alumno.dni == str(dni).strip()).first()
+    if not alumno:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Alumno con DNI {dni} no encontrado."
+        )
+
+    fotos = db.query(Foto).filter(
+        Foto.id_alumno == alumno.id
+    ).order_by(Foto.fecha_subida.desc()).all()
+
+    if not fotos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No se encontraron fotos para este alumno."
+        )
+        
+    return fotos
