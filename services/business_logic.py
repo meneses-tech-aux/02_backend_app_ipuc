@@ -1,0 +1,80 @@
+from datetime import date
+from sqlalchemy.orm import Session
+from fastapi import HTTPException
+from models.models import Alumno, Matricula, Foto, Beneficio, Notificacion, AppViewer
+
+def obtener_datos_carnet_estudiante(db: Session, dni: str):
+    alumno = db.query(Alumno).filter(Alumno.dni == dni).first()
+    if not alumno:
+        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+
+    matricula_activa = db.query(Matricula).filter(
+        Matricula.id_alumno == alumno.id,
+        Matricula.estado == 'ACTIVO'
+    ).first()
+
+    if not matricula_activa:
+        raise HTTPException(status_code=404, detail="El alumno no tiene matrículas activas")
+
+    foto = db.query(Foto).filter(
+        Foto.id_alumno == alumno.id
+    ).order_by(Foto.fecha_subida.desc()).first()
+
+    return {
+        "nombres": alumno.nombres,
+        "apellidos": f"{alumno.apellido_paterno} {alumno.apellido_materno}",
+        "tipo_documento": "DOCUMENTO NACIONAL DE IDENTIDAD (DNI)",
+        "numero_documento": alumno.dni,
+        "codigo_estudiante": alumno.codigo_idiomas,
+        "rol": "ESTUDIANTE",
+        "clase": matricula_activa.curso,
+        "horario": matricula_activa.horario,
+        "sede": "PUEBLO LIBRE", 
+        "aula": matricula_activa.aula,
+        "foto_url": foto.url_s3_foto if foto else None
+    }
+
+def obtener_beneficios_activos(db: Session):
+    hoy = date.today()
+    
+    # Inner Join entre Beneficios y AppViewer
+    resultados = db.query(Beneficio, AppViewer.fecha_caducidad).join(
+        AppViewer, AppViewer.id_beneficios == Beneficio.id
+    ).filter(
+        AppViewer.estado == 'activo',
+        # Que la fecha de caducidad sea mayor o igual a hoy, o que no tenga fecha límite (None)
+        (AppViewer.fecha_caducidad >= hoy) | (AppViewer.fecha_caducidad.is_(None))
+    ).order_by(AppViewer.created_at.desc()).all()
+
+    # Formatear la lista de diccionarios para Pydantic
+    beneficios_lista = []
+    for beneficio, fecha_caducidad in resultados:
+        beneficios_lista.append({
+            "id": beneficio.id,
+            "titulo": beneficio.titulo,
+            "descripcion": beneficio.descripcion,
+            "fecha_caducidad": fecha_caducidad
+        })
+        
+    return beneficios_lista
+
+
+def obtener_notificaciones_activas(db: Session):
+    hoy = date.today()
+    
+    resultados = db.query(Notificacion, AppViewer.fecha_caducidad).join(
+        AppViewer, AppViewer.id_notificaciones == Notificacion.id
+    ).filter(
+        AppViewer.estado == 'activo',
+        (AppViewer.fecha_caducidad >= hoy) | (AppViewer.fecha_caducidad.is_(None))
+    ).order_by(AppViewer.created_at.desc()).all()
+
+    notificaciones_lista = []
+    for notificacion, fecha_caducidad in resultados:
+        notificaciones_lista.append({
+            "id": notificacion.id,
+            "descripcion": notificacion.descripcion,
+            "fecha_caducidad": fecha_caducidad
+        })
+        
+    return notificaciones_lista
