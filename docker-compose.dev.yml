@@ -32,7 +32,7 @@ services:
       - .env.development
     ports:
       # Expuesto hacia afuera para que tu app móvil/web pueda consumirlo
-      - "8000:8000"
+      - "5000:8000"
     volumes:
       # Sincronización en tiempo real de tu código local
       - .:/app
