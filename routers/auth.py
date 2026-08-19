@@ -16,7 +16,6 @@ class TokenResponse(BaseModel):
 
 @router.post("/login", response_model=TokenResponse)
 def login_for_access_token(credentials: LoginRequest):
-    # 1. Verificar si el DNI / usuario existe en Paideia usando wstoken
     usuario_paideia = verificar_usuario_paideia(credentials.username)
     
     if not usuario_paideia:
@@ -26,7 +25,6 @@ def login_for_access_token(credentials: LoginRequest):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # 2. Generar el JWT con el DNI en el subject y datos extra útiles
     token_data = {
         "sub": str(usuario_paideia["username"]),
         "moodle_id": usuario_paideia.get("id"),
@@ -34,7 +32,6 @@ def login_for_access_token(credentials: LoginRequest):
     }
     access_token = crear_token_acceso(token_data)
     
-    # 3. Retornar respuesta al cliente/móvil
     return {
         "access_token": access_token,
         "token_type": "bearer",

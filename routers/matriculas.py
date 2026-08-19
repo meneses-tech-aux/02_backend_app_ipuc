@@ -1,33 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
+from typing import List
 from core.database import get_db
-from models.models import Matricula, Alumno
 from core.security import obtener_usuario_actual
+from services.business_logic import obtener_matriculas_alumno
+from schemas.schemas import MatriculaResponse  # Asegúrate de importar el esquema correspondiente si lo usas
 
-router = APIRouter(
-    prefix="/api/v1/matriculas",
-    tags=["Matriculas"]
-)
+router = APIRouter(prefix="/api/v1/matriculas", tags=["Matriculas"])
 
 @router.get("/mis-matriculas")
-def obtener_mis_matriculas(
+def listar_mis_matriculas(
     db: Session = Depends(get_db),
-    dni_usuario: str = Depends(obtener_usuario_actual) # <-- Bloqueo de seguridad
+    dni_usuario: str = Depends(obtener_usuario_actual)
 ):
     """
     Retorna todo el historial de matrículas del alumno autenticado.
     """
-    # 1. Obtenemos el ID real del alumno a partir de su token
-    alumno = db.query(Alumno).filter(Alumno.dni == dni_usuario).first()
-    if not alumno:
-        raise HTTPException(status_code=404, detail="Alumno no encontrado")
-
-    # 2. Buscamos sus matrículas
-    matriculas = db.query(Matricula).filter(
-        Matricula.id_alumno == alumno.id
-    ).order_by(Matricula.created_at.desc()).all()
-    
-    if not matriculas:
-        raise HTTPException(status_code=404, detail="No se encontraron matrículas para este alumno")
-        
-    return matriculas
+    return obtener_matriculas_alumno(db=db, dni=dni_usuario)

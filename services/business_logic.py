@@ -1,12 +1,15 @@
 from datetime import date
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from models.models import Alumno, Matricula, Foto, Beneficio, Notificacion, AppViewer
 
-def obtener_datos_carnet_estudiante(db: Session, dni: str):
-    alumno = db.query(Alumno).filter(Alumno.dni == dni).first()
+def obtener_datos_carnet_estudiante(db: Session, dni: str) -> dict:
+    alumno = db.query(Alumno).filter(Alumno.dni == str(dni).strip()).first()
     if not alumno:
-        raise HTTPException(status_code=404, detail="Alumno no encontrado")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Alumno con DNI {dni} no encontrado en la base de datos."
+        )
 
     matricula_activa = db.query(Matricula).filter(
         Matricula.id_alumno == alumno.id,
@@ -14,7 +17,10 @@ def obtener_datos_carnet_estudiante(db: Session, dni: str):
     ).first()
 
     if not matricula_activa:
-        raise HTTPException(status_code=404, detail="El alumno no tiene matrículas activas")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="El alumno no tiene matrículas activas registradas."
+        )
 
     foto = db.query(Foto).filter(
         Foto.id_alumno == alumno.id
@@ -37,16 +43,13 @@ def obtener_datos_carnet_estudiante(db: Session, dni: str):
 def obtener_beneficios_activos(db: Session):
     hoy = date.today()
     
-    # Inner Join entre Beneficios y AppViewer
     resultados = db.query(Beneficio, AppViewer.fecha_caducidad).join(
         AppViewer, AppViewer.id_beneficios == Beneficio.id
     ).filter(
         AppViewer.estado == 'activo',
-        # Que la fecha de caducidad sea mayor o igual a hoy, o que no tenga fecha límite (None)
         (AppViewer.fecha_caducidad >= hoy) | (AppViewer.fecha_caducidad.is_(None))
     ).order_by(AppViewer.created_at.desc()).all()
 
-    # Formatear la lista de diccionarios para Pydantic
     beneficios_lista = []
     for beneficio, fecha_caducidad in resultados:
         beneficios_lista.append({
@@ -57,7 +60,6 @@ def obtener_beneficios_activos(db: Session):
         })
         
     return beneficios_lista
-
 
 def obtener_notificaciones_activas(db: Session):
     hoy = date.today()
