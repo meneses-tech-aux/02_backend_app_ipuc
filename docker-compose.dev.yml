@@ -44,7 +44,7 @@ services:
     image: nginx:alpine
     container_name: nginx_proxy
     ports:
-      - "80:80" # Expone el puerto 80 al mundo exterior
+      - "8080:80" # Expone el puerto 80 al mundo exterior
     volumes:
       # Sincroniza tu configuración local con el contenedor de Nginx
       - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
