@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 1. Entrar a la carpeta del proyecto en el servidor
-# cd /home/ubuntu/02_backend_app_ipuc/
-
 echo "DEPLOY SH -> ACTUALIZANDO SERVIDOR"
+
+# 1. Entrar a la carpeta del proyecto en el servidor
+cd /home/ubuntu/02_backend_app_ipuc/
 
 # 2. Traer el último código de GitHub
 git pull origin main
