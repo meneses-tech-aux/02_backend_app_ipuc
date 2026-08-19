@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Importar todos los routers
-from routers import alumnos, fotos, matriculas, beneficios, notificaciones
+from routers import auth, alumnos, fotos, matriculas, beneficios, notificaciones
 
 app = FastAPI(title="API Backend IPUC", version="1.0.0")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 )
 
 # Conectar los endpoints
+app.include_router(auth.router)
 app.include_router(alumnos.router)
 app.include_router(fotos.router)
 app.include_router(matriculas.router)
