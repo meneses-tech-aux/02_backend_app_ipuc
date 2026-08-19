@@ -1,4 +1,5 @@
 from datetime import date
+from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from models.models import Alumno, Matricula, Foto, Beneficio, Notificacion, AppViewer
