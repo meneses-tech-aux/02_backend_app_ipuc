@@ -4,7 +4,7 @@ from typing import List
 from core.database import get_db
 from core.security import obtener_usuario_actual
 from services.business_logic import obtener_fotos_alumno
-from schemas.schemas import FotoResponse  # Asegúrate de importar el esquema correspondiente si lo usas
+from schemas.schemas import FotoResponse
 
 router = APIRouter(prefix="/api/v1/fotos", tags=["Fotos"])
 
