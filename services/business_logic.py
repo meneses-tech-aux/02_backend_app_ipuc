@@ -101,3 +101,23 @@ def obtener_fotos_alumno(db: Session, dni: str) -> List[Foto]:
         )
         
     return fotos
+
+def obtener_matriculas_alumno(db: Session, dni: str) -> List[Matricula]:
+    alumno = db.query(Alumno).filter(Alumno.dni == str(dni).strip()).first()
+    if not alumno:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Alumno con DNI {dni} no encontrado."
+        )
+
+    matriculas = db.query(Matricula).filter(
+        Matricula.id_alumno == alumno.id
+    ).order_by(Matricula.created_at.desc()).all()
+
+    if not matriculas:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No se encontraron matrículas para este alumno."
+        )
+
+    return matriculas
