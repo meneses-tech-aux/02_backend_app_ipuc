@@ -17,24 +17,21 @@ services:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     ports:
-      # Solo accesible desde la misma máquina por seguridad
       - "127.0.0.1:5432:5432"
 
   # ---------------------------------------------
   # 2. CONTENEDOR DE LA API (FastAPI)
   # ---------------------------------------------
   api:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: backend_ipuc_dev
     env_file:
       - .env.development
-    ports:
-      # Expuesto hacia afuera para que tu app móvil/web pueda consumirlo
-      - "5000:8000"
+    expose:
+      - "8000"          # solo visible dentro de la red docker, no en el host
     volumes:
-      # Sincronización en tiempo real de tu código local
       - .:/app
     restart: unless-stopped
     depends_on:
@@ -44,9 +41,8 @@ services:
     image: nginx:alpine
     container_name: nginx_proxy
     ports:
-      - "5000:80"
+      - "5000:80"        # este es el único puerto que sale al host
     volumes:
-      # Sincroniza tu configuración local con el contenedor de Nginx
       - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
     restart: unless-stopped
     depends_on:
